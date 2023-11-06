@@ -155,29 +155,10 @@ func Extract(name string, dest string) error {
 			log.Error().Msgf("Error reading tar: %v", err)
 			return err
 		}
-		if header.Typeflag != tar.TypeReg && header.Typeflag != tar.TypeDir && header.Typeflag != tar.TypeSymlink &&
-			header.Typeflag != tar.TypeXGlobalHeader {
-			log.Error().Msgf("Error reading tar: unsupported type: %c in %s", header.Typeflag, header.Name)
-			return fmt.Errorf("unsupported type: %c in %s", header.Typeflag, header.Name)
-		}
 		path := filepath.Join(dest, header.Name)
 		info := header.FileInfo()
-		if info.IsDir() {
-			if err = os.MkdirAll(path, info.Mode()); err != nil {
-				log.Error().Msgf("Error creating directory: %v", err)
-				return err
-			}
-			continue
-		} else if header.Typeflag == tar.TypeSymlink {
-			if err = os.Symlink(header.Linkname, path); err != nil {
-				log.Error().Msgf("Error creating symlink: %v", err)
-				return err
-			}
-			continue
-		} else if header.Typeflag == tar.TypeXGlobalHeader {
-			log.Debug().Msgf("Skipping %s of PAX records: %s", header.Name, header.PAXRecords)
-			continue
-		} else {
+		switch header.Typeflag {
+		case tar.TypeReg:
 			file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, info.Mode())
 			if err != nil {
 				log.Error().Msgf("Error opening file: %v, %s", err, path)
@@ -193,6 +174,25 @@ func Extract(name string, dest string) error {
 				log.Error().Msgf("Error closing file: %v", err)
 				return err
 			}
+			break
+		case tar.TypeDir:
+			if err = os.MkdirAll(path, info.Mode()); err != nil {
+				log.Error().Msgf("Error creating directory: %v", err)
+				return err
+			}
+			break
+		case tar.TypeSymlink:
+			if err = os.Symlink(header.Linkname, path); err != nil {
+				log.Error().Msgf("Error creating symlink: %v", err)
+				return err
+			}
+			break
+		case tar.TypeXGlobalHeader:
+			log.Debug().Msgf("Skipping %s of PAX records: %s", header.Name, header.PAXRecords)
+			break
+		default:
+			log.Error().Msgf("Error reading tar: unsupported type: %c in %s", header.Typeflag, header.Name)
+			return fmt.Errorf("unsupported type: %c in %s", header.Typeflag, header.Name)
 		}
 	}
 	return nil
