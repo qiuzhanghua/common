@@ -123,7 +123,7 @@ func Compress(tgzName string, files ...string) error {
 	return nil
 }
 
-func Extract(name string, dest string) error {
+func Extract(name, dest string) error {
 	file, err := os.Open(name)
 	if err != nil {
 		log.Error().Msgf("Error opening file: %v", err)
