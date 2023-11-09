@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/rs/zerolog/log"
+	"github.com/labstack/gommon/log"
 	"io"
 	"io/fs"
 	"os"
@@ -17,13 +17,13 @@ func FileIn(filename, zipName string) bool {
 	archive, err := zip.OpenReader(zipName)
 
 	if err != nil {
-		log.Error().Msgf("Error opening archive: %v", err)
+		log.Errorf("Error opening archive: %v", err)
 		return false
 	}
 	defer func(archive *zip.ReadCloser) {
 		err := archive.Close()
 		if err != nil {
-			log.Error().Msgf("Error closing archive: %v", err)
+			log.Errorf("Error closing archive: %v", err)
 		}
 	}(archive)
 
@@ -38,13 +38,13 @@ func FileIn(filename, zipName string) bool {
 func Extract(name, dest string) error {
 	archive, err := zip.OpenReader(name)
 	if err != nil {
-		log.Error().Msgf("Error opening archive: %v", err)
+		log.Errorf("Error opening archive: %v", err)
 		return err
 	}
 	defer func(archive *zip.ReadCloser) {
 		err := archive.Close()
 		if err != nil {
-			log.Error().Msgf("Error closing archive: %v", err)
+			log.Errorf("Error closing archive: %v", err)
 		}
 	}(archive)
 	linkMap := make(map[string]string)
@@ -64,7 +64,7 @@ func Extract(name, dest string) error {
 			buf := new(bytes.Buffer)
 			_, err := io.Copy(buf, fileInArchive)
 			if err != nil {
-				log.Error().Msgf("Error copying file: %v", err)
+				log.Errorf("Error copying file: %v", err)
 				return err
 			}
 			linkMap[f.Name] = buf.String()
@@ -73,11 +73,11 @@ func Extract(name, dest string) error {
 
 		destFile, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
 		if err != nil {
-			log.Error().Msgf("Error opening file: %v", err)
+			log.Errorf("Error opening file: %v", err)
 			return err
 		}
 		if _, err := io.Copy(destFile, fileInArchive); err != nil {
-			log.Error().Msgf("Error copying file: %v", err)
+			log.Errorf("Error copying file: %v", err)
 			return err
 		}
 		_ = destFile.Close()
@@ -86,13 +86,13 @@ func Extract(name, dest string) error {
 	wd, err := os.Getwd()
 	err = os.Chdir(dest)
 	if err != nil {
-		log.Error().Msgf("Error changing directory: %v", err)
+		log.Errorf("Error changing directory: %v", err)
 		return err
 	}
 	for k, v := range linkMap {
 		err = os.Symlink(v, k)
 		if err != nil {
-			log.Error().Msgf("Error creating symlink: %v", err)
+			log.Errorf("Error creating symlink: %v", err)
 			return err
 		}
 	}
@@ -103,20 +103,20 @@ func Extract(name, dest string) error {
 func Compress(zipFile string, files ...string) error {
 	f, err := os.Create(zipFile)
 	if err != nil {
-		log.Error().Msgf("Error creating file: %v", err)
+		log.Errorf("Error creating file: %v", err)
 		return err
 	}
 	defer func(f *os.File) {
 		err := f.Close()
 		if err != nil {
-			log.Error().Msgf("Error closing file: %v", err)
+			log.Errorf("Error closing file: %v", err)
 		}
 	}(f)
 	writer := zip.NewWriter(f)
 	defer func(writer *zip.Writer) {
 		err := writer.Close()
 		if err != nil {
-			log.Error().Msgf("Error closing writer: %v", err)
+			log.Errorf("Error closing writer: %v", err)
 		}
 	}(writer)
 
@@ -128,14 +128,14 @@ func Compress(zipFile string, files ...string) error {
 		if stat.IsDir() {
 			err = addDirToZip(writer, file)
 			if err != nil {
-				log.Error().Msgf("Error adding dir to zip: %v", err)
+				log.Errorf("Error adding dir to zip: %v", err)
 				return err
 			}
 			continue
 		} else if stat.Mode().IsRegular() {
 			err := addFileToZip(writer, file)
 			if err != nil {
-				log.Error().Msgf("Error adding file to zip: %v", err)
+				log.Errorf("Error adding file to zip: %v", err)
 				return err
 			}
 		} else {
@@ -150,13 +150,13 @@ func List(zipFile string) ([]string, error) {
 
 	archive, err := zip.OpenReader(zipFile)
 	if err != nil {
-		log.Error().Msgf("Error opening archive: %v", err)
+		log.Errorf("Error opening archive: %v", err)
 		return nil, err
 	}
 	defer func(archive *zip.ReadCloser) {
 		err := archive.Close()
 		if err != nil {
-			log.Error().Msgf("Error closing archive: %v", err)
+			log.Errorf("Error closing archive: %v", err)
 		}
 	}(archive)
 
@@ -169,12 +169,12 @@ func List(zipFile string) ([]string, error) {
 			buf := new(bytes.Buffer)
 			reader, err := f.Open()
 			if err != nil {
-				log.Error().Msgf("Error opening Symlink: %v", err)
+				log.Errorf("Error opening Symlink: %v", err)
 				return nil, err
 			}
 			_, err = io.Copy(buf, reader)
 			if err != nil {
-				log.Error().Msgf("Error copying Symlink: %v", err)
+				log.Errorf("Error copying Symlink: %v", err)
 				return nil, err
 			}
 			link := buf.String()
@@ -186,7 +186,6 @@ func List(zipFile string) ([]string, error) {
 		} else {
 			return nil, errors.New("unknown file type for " + f.Name + " in zip")
 		}
-		fmt.Printf("%s\n", f.Name)
 	}
 	return result, nil
 }
@@ -194,30 +193,30 @@ func List(zipFile string) ([]string, error) {
 func addFileToZip(writer *zip.Writer, file string) error {
 	info, err := os.Stat(file)
 	if err != nil {
-		log.Error().Msgf("Error getting file info: %v", err)
+		log.Errorf("Error getting file info: %v", err)
 		return err
 	}
 	header, err := zip.FileInfoHeader(info)
 	if err != nil {
-		log.Error().Msgf("Error creating header: %v", err)
+		log.Errorf("Error creating header: %v", err)
 		return err
 	}
 	header.Method = zip.Deflate
 	header.Name = file
 	headerWriter, err := writer.CreateHeader(header)
 	if err != nil {
-		log.Error().Msgf("Error creating header: %v", err)
+		log.Errorf("Error creating header: %v", err)
 		return err
 	}
 	f, err := os.Open(file)
 	if err != nil {
-		log.Error().Msgf("Error opening file: %v", err)
+		log.Errorf("Error opening file: %v", err)
 		return err
 	}
 	defer func(f *os.File) {
 		err := f.Close()
 		if err != nil {
-			log.Error().Msgf("Error closing file: %v", err)
+			log.Errorf("Error closing file: %v", err)
 		}
 	}(f)
 	_, err = io.Copy(headerWriter, f)
@@ -227,18 +226,18 @@ func addFileToZip(writer *zip.Writer, file string) error {
 func addDirToZip(writer *zip.Writer, dir string) error {
 	return filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			log.Error().Msgf("Error walking path: %v", err)
+			log.Errorf("Error walking path: %v", err)
 			return err
 		}
 		header, err := zip.FileInfoHeader(info)
 		if err != nil {
-			log.Error().Msgf("Error creating header: %v", err)
+			log.Errorf("Error creating header: %v", err)
 			return err
 		}
 		header.Method = zip.Deflate
 		header.Name, err = filepath.Rel(filepath.Dir(dir), path)
 		if err != nil {
-			log.Error().Msgf("Error getting relative path: %v", err)
+			log.Errorf("Error getting relative path: %v", err)
 			return err
 		}
 		if info.IsDir() {
@@ -246,7 +245,7 @@ func addDirToZip(writer *zip.Writer, dir string) error {
 		}
 		headerWriter, err := writer.CreateHeader(header)
 		if err != nil {
-			log.Error().Msgf("Error creating header: %v", err)
+			log.Errorf("Error creating header: %v", err)
 			return err
 		}
 		if info.IsDir() {
@@ -255,28 +254,28 @@ func addDirToZip(writer *zip.Writer, dir string) error {
 		if info.Mode().Type() == fs.ModeSymlink {
 			link, err := os.Readlink(path)
 			if err != nil {
-				log.Error().Msgf("Error reading symlink: %v", err)
+				log.Errorf("Error reading symlink: %v", err)
 				return err
 			}
 			_, err = headerWriter.Write([]byte(link))
 			if err != nil {
-				log.Error().Msgf("Error writing symlink: %v", err)
+				log.Errorf("Error writing symlink: %v", err)
 			}
 			return nil
 		}
 		if !info.Mode().IsRegular() {
-			log.Error().Msgf("Skipping non regular file: %s", path)
+			log.Errorf("Skipping non regular file: %s", path)
 			return nil
 		}
 		f, err := os.Open(path)
 		if err != nil {
-			log.Error().Msgf("Error opening file: %v", err)
+			log.Errorf("Error opening file: %v", err)
 			return err
 		}
 		defer func(f *os.File) {
 			err := f.Close()
 			if err != nil {
-				log.Error().Msgf("Error closing file: %v", err)
+				log.Errorf("Error closing file: %v", err)
 			}
 		}(f)
 		_, err = io.Copy(headerWriter, f)

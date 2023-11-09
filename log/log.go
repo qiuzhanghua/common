@@ -1,32 +1,35 @@
 package log
 
 import (
-	"github.com/rs/zerolog"
+	"github.com/labstack/gommon/log"
 	"strings"
 )
 
 func SetGlobalLevel(level string) {
 	level = strings.ToLower(level)
 	switch level {
-	case "trace":
-		zerolog.SetGlobalLevel(zerolog.TraceLevel)
-		break
 	case "debug":
-		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+		log.SetLevel(log.DEBUG) // 1
+		break
+	case "info":
+		log.SetLevel(log.INFO) // 2
 		break
 	case "warn":
-		zerolog.SetGlobalLevel(zerolog.WarnLevel)
+		log.SetLevel(log.WARN) // 3
 		break
 	case "error":
-		zerolog.SetGlobalLevel(zerolog.ErrorLevel)
+		log.SetLevel(log.ERROR) // 4
 		break
-	case "fatal":
-		zerolog.SetGlobalLevel(zerolog.FatalLevel)
+	case "off":
+		log.SetLevel(log.OFF) // 5
 		break
 	case "panic":
-		zerolog.SetGlobalLevel(zerolog.PanicLevel)
+		log.SetLevel(6)
+		break
+	case "fatal":
+		log.SetLevel(7)
 		break
 	default:
-		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+		log.SetLevel(log.INFO)
 	}
 }
