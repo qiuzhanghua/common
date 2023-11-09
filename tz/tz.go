@@ -146,7 +146,7 @@ func Compress(zipFile string, files ...string) error {
 }
 
 func List(zipFile string) ([]string, error) {
-	result := make([]string, 0, 8)
+	result := make([]string, 8)
 
 	archive, err := zip.OpenReader(zipFile)
 	if err != nil {

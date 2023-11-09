@@ -236,3 +236,57 @@ func FileIn(filename, tgzName string) bool {
 	}
 	return false
 }
+
+func List(tgzName string) ([]string, error) {
+	result := make([]string, 8)
+	file, err := os.Open(tgzName)
+	if err != nil {
+		log.Error().Msgf("Error opening file: %v", err)
+		return nil, err
+	}
+	defer func(file *os.File) {
+		err := file.Close()
+		if err != nil {
+			log.Error().Msgf("Error closing file: %v", err)
+		}
+	}(file)
+	gzipReader, err := gzip.NewReader(file)
+	if err != nil {
+		log.Error().Msgf("Error reading gzip: %v", err)
+		return nil, err
+	}
+	defer func(gzipReader *gzip.Reader) {
+		err := gzipReader.Close()
+		if err != nil {
+			log.Error().Msgf("Error closing gzip: %v", err)
+		}
+	}(gzipReader)
+	tarReader := tar.NewReader(gzipReader)
+	for {
+		header, err := tarReader.Next()
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			log.Error().Msgf("Error reading tar: %v", err)
+			return nil, err
+		}
+		switch header.Typeflag {
+		case tar.TypeReg:
+			result = append(result, fmt.Sprintf("File: %s", header.Name))
+			break
+		case tar.TypeDir:
+			result = append(result, fmt.Sprintf("Dir: %s", header.Name))
+			break
+		case tar.TypeSymlink:
+			result = append(result, fmt.Sprintf("Symlink: %s -> %s", header.Name, header.Linkname))
+			break
+		case tar.TypeXGlobalHeader:
+			log.Debug().Msgf("Skipping %s of PAX records: %s", header.Name, header.PAXRecords)
+			break
+		default:
+			log.Error().Msgf("Error reading tar: unsupported type: %c in %s", header.Typeflag, header.Name)
+			return nil, fmt.Errorf("unsupported type: %c in %s", header.Typeflag, header.Name)
+		}
+	}
+	return result, nil
+}
