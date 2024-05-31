@@ -2,6 +2,7 @@ package util
 
 import (
 	"os"
+	"runtime"
 	"testing"
 )
 
@@ -12,6 +13,22 @@ func TestExpandHomePath(t *testing.T) {
 	if err != nil {
 		t.Errorf("error: %s", err)
 	}
+	if expected != actual {
+		t.Errorf("Test failed, expected: '%v', got:  '%v'", expected, actual)
+	}
+}
+
+func TestEnsurePathSeparator(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		expected := "C:\\Users\\go"
+		actual := EnsurePathSeparator("C:\\Users\\go")
+		if expected != actual {
+			t.Errorf("Test failed, expected: '%v', got:  '%v'", expected, actual)
+		}
+		return
+	}
+	expected := "C:/Users/go"
+	actual := EnsurePathSeparator("C:\\Users\\go")
 	if expected != actual {
 		t.Errorf("Test failed, expected: '%v', got:  '%v'", expected, actual)
 	}
