@@ -6,8 +6,17 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strings"
 )
+
+func EnsurePathSeparator(p string) string {
+	if runtime.GOOS == "windows" {
+		return strings.ReplaceAll(p, "/", "\\")
+	} else {
+		return strings.ReplaceAll(p, "\\", "/")
+	}
+}
 
 // ExpandHome expend dir start with ~
 func ExpandHome(path string) (string, error) {
