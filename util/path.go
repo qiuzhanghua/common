@@ -2,12 +2,13 @@ package util
 
 import (
 	"errors"
-	"github.com/labstack/gommon/log"
 	"os"
 	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
+
+	"github.com/labstack/gommon/log"
 )
 
 func EnsurePathSeparator(p string) string {
@@ -44,12 +45,15 @@ func ExpandHome(path string) (string, error) {
 }
 
 func AbsPath(p string) (string, error) {
-	absPath, err := filepath.EvalSymlinks(p)
-	if err != nil {
-		log.Errorf("Error evaluating symlinks: %v", err)
-		return ".", err
+	absPath := p
+	if runtime.GOOS != "windows" {
+		absPath, err := filepath.EvalSymlinks(p)
+		if err != nil {
+			log.Errorf("Error evaluating symlinks: %v", err)
+			return ".", err
+		}
 	}
-	absPath, err = filepath.Abs(absPath)
+	absPath, err := filepath.Abs(absPath)
 	if err != nil {
 		log.Errorf("Error getting absolute path: %v", err)
 		return ".", err
