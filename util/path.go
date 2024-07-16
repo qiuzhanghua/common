@@ -49,8 +49,7 @@ func AbsPath(p string) (string, error) {
 	if runtime.GOOS != "windows" {
 		absPath, err := filepath.EvalSymlinks(p)
 		if err != nil {
-			log.Errorf("Error evaluating symlinks %s: %v", absPath, err)
-			return ".", err
+			log.Warnf("Error evaluating symlinks %s: %v", absPath, err)
 		}
 	}
 	absPath, err := filepath.Abs(absPath)
