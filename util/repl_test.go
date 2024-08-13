@@ -37,3 +37,27 @@ func TestReplaceString3(t *testing.T) {
 		t.Errorf("Expected : %v, actual is '%v'", expected, actual)
 	}
 }
+
+func TestReplaceWithMode(t *testing.T) {
+	content := "setx ${TDP_HOME}"
+	_ = os.Setenv("TDP_HOME", "C:\\Users\\q\\tdp")
+	actual := ReplaceStringWithMode(content, Slash)
+	expected := "setx C:/Users/q/tdp"
+	if actual != expected {
+		t.Errorf("Expected : %v, actual is '%v'", expected, actual)
+	}
+
+	_ = os.Setenv("TDP_HOME", "C:/Users/q/tdp")
+	actual = ReplaceStringWithMode(content, BackSlash)
+	expected = "setx C:\\Users\\q\\tdp"
+	if actual != expected {
+		t.Errorf("Expected : %v, actual is '%v'", expected, actual)
+	}
+
+	_ = os.Setenv("TDP_HOME", "C:\\Users\\q\\tdp")
+	actual = ReplaceStringWithMode(content, DoubleBackSlash)
+	expected = "setx C:\\\\Users\\\\q\\\\tdp"
+	if actual != expected {
+		t.Errorf("Expected : %v, actual is '%v'", expected, actual)
+	}
+}
