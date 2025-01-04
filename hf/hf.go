@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/labstack/gommon/log"
+
 	"github.com/qiuzhanghua/common/util"
 )
 
@@ -17,6 +19,7 @@ func get_dir_with_env(env string, default_dir string) (string, error) {
 			if fileInfo.IsDir() {
 				return result, nil
 			} else {
+				log.Errorf("%s is not a directory", fileInfo.Name())
 				return "", fmt.Errorf("%s is not a directory", fileInfo.Name())
 			}
 		} else {
@@ -50,26 +53,34 @@ func HfHome() (string, error) {
 }
 
 func HuggingfaceHubCache() (string, error) {
-	result, err := get_dir_with_env("HUGGINGFACE_HUB_CACHE", "~/.cache/huggingface/hub")
-	if err != nil {
-		result, err = HfHome()
+	cache := ""
+	result, ok := os.LookupEnv("HUGGINGFACE_HUB_CACHE")
+	if ok {
+		result, err := get_dir_with_env("HUGGINGFACE_HUB_CACHE", "~/.cache/huggingface/hub")
+		if err != nil {
+			return "", err
+		}
+		cache = result
+	} else {
+		hfHome, err := HfHome()
 		if err != nil {
 			return "", err
 		} else {
-			result = result + "/hub"
-			fileInfo, err := os.Stat(result)
-			if err == nil {
-				if fileInfo.IsDir() {
-					return result, nil
-				} else {
-					return "", fmt.Errorf("%s is not a directory", result)
-				}
-			} else {
-				return "", err
-			}
+			cache = filepath.Join(hfHome, "hub")
+			cache = strings.ReplaceAll(cache, "/", string(os.PathSeparator))
 		}
 	}
-	return result, nil
+	log.Debugf("HuggingfaceHubCache: %s", cache)
+	fileInfo, err := os.Stat(cache)
+	if err == nil {
+		if fileInfo.IsDir() {
+			return cache, nil
+		} else {
+			return "", fmt.Errorf("%s is not a directory", result)
+		}
+	} else {
+		return "", err
+	}
 }
 
 func HfDatasetsCache() (string, error) {
