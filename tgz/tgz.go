@@ -159,7 +159,7 @@ func Extract(name, dest string) error {
 		path := filepath.Join(dest, header.Name)
 		info := header.FileInfo()
 		switch header.Typeflag {
-		case tar.TypeReg, tar.TypeLink:
+		case tar.TypeReg:
 			file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, info.Mode())
 			if err != nil {
 				log.Errorf("Error opening file: %v, %s", err, path)
@@ -187,6 +187,32 @@ func Extract(name, dest string) error {
 			}
 		case tar.TypeXGlobalHeader:
 			log.Debugf("Skipping %s of PAX records: %s", header.Name, header.PAXRecords)
+		case tar.TypeLink:
+			// Handle symbolic link
+			targetPath := header.Linkname
+			linkPath := header.Name
+
+			log.Printf("Extracting symlink: %s -> %s\n", linkPath,
+				targetPath)
+
+			// Create the directory if it does not exist.
+			dirPath := linkPath
+			for i := len(linkPath) - 1; i > 0 && os.PathSeparator !=
+				linkPath[i]; i-- {
+				dirPath = linkPath[:i]
+				_, err := os.Stat(dirPath)
+				if os.IsNotExist(err) {
+					os.MkdirAll(dirPath, 0755)
+				}
+			}
+
+			// Create the symbolic link.
+			err = os.Symlink(targetPath, linkPath)
+			if err != nil {
+				return fmt.Errorf("failed to create symlink %s: %w",
+					linkPath, err)
+			}
+
 		default:
 			log.Errorf("Error reading tar: unsupported type: %c in %s", header.Typeflag, header.Name)
 			// return fmt.Errorf("unsupported type: %c in %s", header.Typeflag, header.Name)
@@ -270,16 +296,13 @@ func List(tgzName string) ([]string, error) {
 		switch header.Typeflag {
 		case tar.TypeReg:
 			result = append(result, fmt.Sprintf("File: %s", header.Name))
-			break
 		case tar.TypeDir:
 			result = append(result, fmt.Sprintf("Dir: %s", header.Name))
-			break
 		case tar.TypeSymlink:
 			result = append(result, fmt.Sprintf("Symlink: %s -> %s", header.Name, header.Linkname))
-			break
 		case tar.TypeXGlobalHeader:
 			log.Debugf("Skipping %s of PAX records: %s", header.Name, header.PAXRecords)
-			break
+
 		default:
 			log.Errorf("Error reading tar: unsupported type: %c in %s", header.Typeflag, header.Name)
 			return nil, fmt.Errorf("unsupported type: %c in %s", header.Typeflag, header.Name)
