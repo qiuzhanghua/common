@@ -181,6 +181,12 @@ func Extract(name, dest string) error {
 				return err
 			}
 		case tar.TypeSymlink, tar.TypeLink:
+			_, err := os.Stat(path)
+			if err == nil {
+				if err = os.Remove(path); err != nil {
+					log.Errorf("Error removing file: %v", err)
+				}
+			}
 			if err = os.Symlink(header.Linkname, path); err != nil {
 				log.Errorf("Error creating symlink: %v", err)
 				// return err
