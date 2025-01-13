@@ -180,35 +180,35 @@ func Extract(name, dest string) error {
 				log.Errorf("Error creating directory: %v", err)
 				return err
 			}
-		case tar.TypeSymlink:
+		case tar.TypeSymlink, tar.TypeLink:
 			if err = os.Symlink(header.Linkname, path); err != nil {
 				log.Errorf("Error creating symlink: %v", err)
 				// return err
 			}
 		case tar.TypeXGlobalHeader:
 			log.Debugf("Skipping %s of PAX records: %s", header.Name, header.PAXRecords)
-		case tar.TypeLink:
-			// Handle symbolic link
-			targetPath := header.Linkname
-			linkPath := header.Name
+		// case tar.TypeLink:
+		// 	// Handle symbolic link
+		// 	targetPath := header.Linkname
+		// 	linkPath := header.Name
 
-			log.Debugf("Extracting symlink: %s -> %s\n", linkPath,
-				targetPath)
+		// 	log.Printf("Extracting symlink: %s -> %s\n", linkPath,
+		// 		targetPath)
 
-			// Create the directory if it does not exist.
-			dirPath := linkPath
+		// 	// Create the directory if it does not exist.
+		// 	dirPath := linkPath
 
-			_, err := os.Stat(dirPath)
-			if os.IsNotExist(err) {
-				os.MkdirAll(dirPath, 0755)
-			}
+		// 	_, err := os.Stat(dirPath)
+		// 	if os.IsNotExist(err) {
+		// 		os.MkdirAll(dirPath, 0755)
+		// 	}
 
-			// Create the symbolic link.
-			err = os.Symlink(targetPath, linkPath)
-			if err != nil {
-				log.Errorf("failed to create symlink %s: %w",
-					linkPath, err)
-			}
+		// 	// Create the symbolic link.
+		// 	err = os.Symlink(targetPath, linkPath)
+		// 	if err != nil {
+		// 		log.Errorf("failed to create symlink %s: %w",
+		// 			linkPath, err)
+		// 	}
 
 		default:
 			log.Errorf("Error reading tar: unsupported type: %c in %s", header.Typeflag, header.Name)
