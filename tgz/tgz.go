@@ -194,15 +194,14 @@ func Extract(name, dest string) error {
 		case tar.TypeXGlobalHeader:
 			log.Debugf("Skipping %s of PAX records: %s", header.Name, header.PAXRecords)
 		case tar.TypeLink:
-			// Handle symbolic link
 			targetPath := header.Linkname
 			linkPath := header.Name
 
-			log.Printf("Extracting symlink: %s -> %s\n",
+			log.Debugf("Extracting symlink: %s -> %s\n",
 				targetPath, linkPath)
 
-			baseDir1 := filepath.Dir(linkPath)
-			err := os.MkdirAll(baseDir1, 0755)
+			baseDir := filepath.Dir(linkPath)
+			err := os.MkdirAll(baseDir, 0755)
 			if err != nil {
 				log.Errorf("Error creating directory: %v", err)
 			}
@@ -211,27 +210,11 @@ func Extract(name, dest string) error {
 				log.Errorf("Error converting hard link to soft link: %v", err)
 				break
 			}
-			log.Printf("link: %s -> %s\n", file, linkPath)
+			log.Debugf("link: %s -> %s\n", file, linkPath)
 			err = os.Symlink(file, linkPath)
 			if err != nil {
 				log.Errorf("Error creating symlink: %v", err)
 			}
-
-			// // Create the directory if it does not exist.
-			// dirPath := linkPath
-
-			// _, err := os.Stat(dirPath)
-			// if os.IsNotExist(err) {
-			// 	os.MkdirAll(dirPath, 0755)
-			// }
-
-			// // Create the symbolic link.
-			// err = os.Symlink(targetPath, linkPath)
-			// if err != nil {
-			// 	log.Errorf("failed to create symlink %s: %w",
-			// 		linkPath, err)
-			// }
-
 		default:
 			log.Errorf("Error reading tar: unsupported type: %c in %s", header.Typeflag, header.Name)
 			// return fmt.Errorf("unsupported type: %c in %s", header.Typeflag, header.Name)
@@ -334,12 +317,12 @@ func HardToSoft(link string, origin string) (string, string, error) {
 	// link = ./git_2.47.1_windows_amd64/mingw64/libexec/git-core/Atlassian.Bitbucket.dll
 	// origin = ./git_2.47.1_windows_amd64/mingw64/bin/Atlassian.Bitbucket.dll
 	// return "Atlassian.Bitbucket.dll", "../../bin/Atlassian.Bitbucket.dll"
-	baseDir1 := filepath.Dir(link)
-	baseName1 := filepath.Base(link)
+	baseDir := filepath.Dir(link)
+	baseName := filepath.Base(link)
 
-	relPath, err := filepath.Rel(baseDir1, origin)
+	relPath, err := filepath.Rel(baseDir, origin)
 	if err != nil {
 		return "", "", err
 	}
-	return baseName1, relPath, nil
+	return baseName, relPath, nil
 }
