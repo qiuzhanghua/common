@@ -192,18 +192,15 @@ func Extract(name, dest string) error {
 			targetPath := header.Linkname
 			linkPath := header.Name
 
-			log.Printf("Extracting symlink: %s -> %s\n", linkPath,
+			log.Debugf("Extracting symlink: %s -> %s\n", linkPath,
 				targetPath)
 
 			// Create the directory if it does not exist.
 			dirPath := linkPath
-			for i := len(linkPath) - 1; i > 0 && os.PathSeparator !=
-				linkPath[i]; i-- {
-				dirPath = linkPath[:i]
-				_, err := os.Stat(dirPath)
-				if os.IsNotExist(err) {
-					os.MkdirAll(dirPath, 0755)
-				}
+
+			_, err := os.Stat(dirPath)
+			if os.IsNotExist(err) {
+				os.MkdirAll(dirPath, 0755)
 			}
 
 			// Create the symbolic link.
