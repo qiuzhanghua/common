@@ -201,6 +201,17 @@ func Extract(name, dest string) error {
 			log.Printf("Extracting symlink: %s -> %s\n", linkPath,
 				targetPath)
 
+			symbol, file, err := HardToSoft(linkPath, targetPath)
+			if err != nil {
+				log.Errorf("Error converting hard link to soft link: %v", err)
+				break
+			}
+			log.Printf("link: %s -> %s\n", symbol, file)
+			err = os.Symlink(file, symbol)
+			if err != nil {
+				log.Errorf("Error creating symlink: %v", err)
+			}
+
 			// // Create the directory if it does not exist.
 			// dirPath := linkPath
 
@@ -312,4 +323,18 @@ func List(tgzName string) ([]string, error) {
 		}
 	}
 	return result, nil
+}
+
+func HardToSoft(link string, origin string) (string, string, error) {
+	// link = ./git_2.47.1_windows_amd64/mingw64/libexec/git-core/Atlassian.Bitbucket.dll
+	// origin = ./git_2.47.1_windows_amd64/mingw64/bin/Atlassian.Bitbucket.dll
+	// return "Atlassian.Bitbucket.dll", "../../bin/Atlassian.Bitbucket.dll"
+	baseDir1 := filepath.Dir(link)
+	baseName1 := filepath.Base(link)
+
+	relPath, err := filepath.Rel(baseDir1, origin)
+	if err != nil {
+		return "", "", err
+	}
+	return baseName1, relPath, nil
 }
