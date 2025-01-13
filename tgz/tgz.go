@@ -4,11 +4,12 @@ import (
 	"archive/tar"
 	"compress/gzip"
 	"fmt"
-	"github.com/labstack/gommon/log"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/labstack/gommon/log"
 )
 
 func Compress(tgzName string, files ...string) error {
@@ -174,25 +175,21 @@ func Extract(name, dest string) error {
 				log.Errorf("Error closing file: %v", err)
 				return err
 			}
-			break
 		case tar.TypeDir:
 			if err = os.MkdirAll(path, info.Mode()); err != nil {
 				log.Errorf("Error creating directory: %v", err)
 				return err
 			}
-			break
 		case tar.TypeSymlink:
 			if err = os.Symlink(header.Linkname, path); err != nil {
 				log.Errorf("Error creating symlink: %v", err)
-				return err
+				// return err
 			}
-			break
 		case tar.TypeXGlobalHeader:
 			log.Debugf("Skipping %s of PAX records: %s", header.Name, header.PAXRecords)
-			break
 		default:
 			log.Errorf("Error reading tar: unsupported type: %c in %s", header.Typeflag, header.Name)
-			return fmt.Errorf("unsupported type: %c in %s", header.Typeflag, header.Name)
+			// return fmt.Errorf("unsupported type: %c in %s", header.Typeflag, header.Name)
 		}
 	}
 	return nil
