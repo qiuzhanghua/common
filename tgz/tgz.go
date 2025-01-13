@@ -198,22 +198,21 @@ func Extract(name, dest string) error {
 			targetPath := header.Linkname
 			linkPath := header.Name
 
-			log.Printf("Extracting symlink: %s -> %s\n", linkPath,
-				targetPath)
+			log.Printf("Extracting symlink: %s -> %s\n",
+				targetPath, linkPath)
 
 			baseDir1 := filepath.Dir(linkPath)
 			err := os.MkdirAll(baseDir1, 0755)
 			if err != nil {
 				log.Errorf("Error creating directory: %v", err)
 			}
-
-			symbol, file, err := HardToSoft(linkPath, targetPath)
-			if err != nil {
-				log.Errorf("Error converting hard link to soft link: %v", err)
-				break
-			}
-			log.Printf("link: %s -> %s\n", symbol, file)
-			err = os.Symlink(targetPath, file)
+			// symbol, file, err := HardToSoft(linkPath, targetPath)
+			// if err != nil {
+			// 	log.Errorf("Error converting hard link to soft link: %v", err)
+			// 	break
+			// }
+			// log.Printf("link: %s -> %s\n", targetPath, symbol)
+			err = os.Symlink(targetPath, linkPath)
 			if err != nil {
 				log.Errorf("Error creating symlink: %v", err)
 			}
