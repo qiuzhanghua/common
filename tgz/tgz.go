@@ -206,7 +206,7 @@ func Extract(name, dest string) error {
 			// Create the symbolic link.
 			err = os.Symlink(targetPath, linkPath)
 			if err != nil {
-				return fmt.Errorf("failed to create symlink %s: %w",
+				log.Errorf("failed to create symlink %s: %w",
 					linkPath, err)
 			}
 
