@@ -206,13 +206,13 @@ func Extract(name, dest string) error {
 			if err != nil {
 				log.Errorf("Error creating directory: %v", err)
 			}
-			// symbol, file, err := HardToSoft(linkPath, targetPath)
-			// if err != nil {
-			// 	log.Errorf("Error converting hard link to soft link: %v", err)
-			// 	break
-			// }
-			// log.Printf("link: %s -> %s\n", targetPath, symbol)
-			err = os.Symlink(targetPath, linkPath)
+			_, file, err := HardToSoft(linkPath, targetPath)
+			if err != nil {
+				log.Errorf("Error converting hard link to soft link: %v", err)
+				break
+			}
+			log.Printf("link: %s -> %s\n", file, linkPath)
+			err = os.Symlink(file, linkPath)
 			if err != nil {
 				log.Errorf("Error creating symlink: %v", err)
 			}
