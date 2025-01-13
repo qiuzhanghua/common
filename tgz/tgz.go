@@ -159,7 +159,7 @@ func Extract(name, dest string) error {
 		path := filepath.Join(dest, header.Name)
 		info := header.FileInfo()
 		switch header.Typeflag {
-		case tar.TypeReg:
+		case tar.TypeReg | tar.TypeLink:
 			file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, info.Mode())
 			if err != nil {
 				log.Errorf("Error opening file: %v, %s", err, path)
