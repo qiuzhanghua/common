@@ -1,4 +1,4 @@
-package clib
+package libc
 
 import (
 	"os"
@@ -10,7 +10,7 @@ var (
 	result string
 )
 
-// Detect returns "glibc", "musl", or "unknown"
+// Detect returns "gnu", "musl", or "unknown"
 func Detect() string {
 	once.Do(func() {
 		result = detect()
@@ -42,7 +42,7 @@ func checkFiles() string {
 
 	for _, file := range glibcFiles {
 		if _, err := os.Stat(file); err == nil {
-			return "glibc"
+			return "gnu"
 		}
 	}
 

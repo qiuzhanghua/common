@@ -1,4 +1,4 @@
-package clib
+package libc
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ import (
 func TestDetect(t *testing.T) {
 	libc := Detect()
 	fmt.Printf("Detected libc: %s\n", libc)
-	if libc != "glibc" && libc != "musl" && libc != "unknown" {
+	if libc != "gnu" && libc != "musl" && libc != "unknown" {
 		t.Errorf("Unexpected libc detected: %s", libc)
 	}
 }
