@@ -1,8 +1,10 @@
 module github.com/qiuzhanghua/common
 
-go 1.17
+go 1.25
 
 require github.com/labstack/gommon v0.4.2
+
+require github.com/klauspost/compress v1.18.3
 
 require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
