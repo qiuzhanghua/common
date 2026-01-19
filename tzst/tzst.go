@@ -320,7 +320,6 @@ func FileIn(filename, tarZstName string) bool {
 
 	// Clean and prepare the filename for comparison
 	searchFilename := filepath.Clean(filename)
-
 	for {
 		header, err := tarReader.Next()
 		if err == io.EOF {
@@ -400,72 +399,22 @@ func List(tarZstName string) ([]string, error) {
 			return result, err // Return partial results on error
 		}
 
-		// Skip file content to move to next entry
-		if header.Size > 0 {
-			if _, err := io.Copy(io.Discard, tarReader); err != nil {
-				log.Warnf("Error skipping file content for %s: %v", header.Name, err)
-			}
-		}
+		switch header.Typeflag {
+		case tar.TypeReg:
+			result = append(result, fmt.Sprintf("File: %s", header.Name))
+		case tar.TypeDir:
+			result = append(result, fmt.Sprintf("Dir: %s", header.Name))
+		case tar.TypeSymlink:
+			result = append(result, fmt.Sprintf("Symlink: %s -> %s", header.Name, header.Linkname))
+		case tar.TypeXGlobalHeader:
+			log.Debugf("Skipping %s of PAX records: %s", header.Name, header.PAXRecords)
 
-		entry := formatTarEntry(header)
-		if entry != "" {
-			result = append(result, entry)
+		default:
+			log.Errorf("Error reading tar: unsupported type: %c in %s", header.Typeflag, header.Name)
+			return nil, fmt.Errorf("unsupported type: %c in %s", header.Typeflag, header.Name)
 		}
 	}
-
 	return result, nil
-}
-
-func formatTarEntry(header *tar.Header) string {
-	switch header.Typeflag {
-	case tar.TypeReg:
-		perm := header.FileInfo().Mode().Perm()
-		size := formatFileSize(header.Size)
-		return fmt.Sprintf("File: %s (%s, %s)", header.Name, size, perm)
-
-	case tar.TypeDir:
-		perm := header.FileInfo().Mode().Perm()
-		return fmt.Sprintf("Dir:  %s/ (%s)", header.Name, perm)
-
-	case tar.TypeSymlink:
-		perm := header.FileInfo().Mode().Perm()
-		return fmt.Sprintf("Link: %s -> %s (%s)", header.Name, header.Linkname, perm)
-
-	case tar.TypeLink:
-		perm := header.FileInfo().Mode().Perm()
-		return fmt.Sprintf("Hard: %s -> %s (%s)", header.Name, header.Linkname, perm)
-
-	case tar.TypeChar:
-		return fmt.Sprintf("Char: %s (character device)", header.Name)
-
-	case tar.TypeBlock:
-		return fmt.Sprintf("Block: %s (block device)", header.Name)
-
-	case tar.TypeFifo:
-		return fmt.Sprintf("Fifo: %s (named pipe)", header.Name)
-
-	case tar.TypeXGlobalHeader, tar.TypeXHeader:
-		// Skip PAX headers or log them as debug
-		log.Debugf("PAX Header: %s (Records: %d)", header.Name, len(header.PAXRecords))
-		return fmt.Sprintf("PAX:  %s (extended metadata)", header.Name)
-
-	default:
-		log.Warnf("Unknown tar entry type: %c in %s", header.Typeflag, header.Name)
-		return fmt.Sprintf("Unknown(%c): %s", header.Typeflag, header.Name)
-	}
-}
-
-func formatFileSize(bytes int64) string {
-	const unit = 1024
-	if bytes < unit {
-		return fmt.Sprintf("%d B", bytes)
-	}
-	div, exp := int64(unit), 0
-	for n := bytes / unit; n >= unit; n /= unit {
-		div *= unit
-		exp++
-	}
-	return fmt.Sprintf("%.1f %cB", float64(bytes)/float64(div), "KMGTPE"[exp])
 }
 
 var zstdEncoderPool = sync.Pool{
