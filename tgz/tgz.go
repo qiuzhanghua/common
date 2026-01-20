@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/labstack/gommon/log"
+	"github.com/qiuzhanghua/common/util"
 )
 
 func Compress(tgzName string, files ...string) error {
