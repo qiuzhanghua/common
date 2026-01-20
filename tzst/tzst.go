@@ -5,13 +5,13 @@ import (
 	"sync"
 
 	"archive/tar"
+	"github.com/klauspost/compress/zstd"
+	"github.com/labstack/gommon/log"
+	"github.com/qiuzhanghua/common/util"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/klauspost/compress/zstd"
-	"github.com/labstack/gommon/log"
 )
 
 func Compress(tarZstName string, files ...string) error {
@@ -136,6 +136,17 @@ func Compress(tarZstName string, files ...string) error {
 }
 
 func Extract(name, dest string) error {
+	dest, err := util.ExpandHome(dest)
+	if err != nil {
+		log.Errorf("Error expanding home dir: %v", err)
+		return err
+	}
+	dest, err = util.AbsPath(dest)
+	if err != nil {
+		log.Errorf("Error getting absolute path: %v", err)
+		return err
+	}
+
 	file, err := os.Open(name)
 	if err != nil {
 		log.Errorf("Error opening file: %v", err)
